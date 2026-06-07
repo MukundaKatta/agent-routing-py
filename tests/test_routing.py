@@ -6,6 +6,7 @@ from agent_routing import Router, RoutingResult, NoRouteError
 # Keyword routes
 # ---------------------------------------------------------------------------
 
+
 def test_keyword_match():
     r = Router()
     r.add_keyword_route("code", ["python", "function"], config={"model": "code-model"})
@@ -39,6 +40,7 @@ def test_keyword_no_match_raises():
 # Default config
 # ---------------------------------------------------------------------------
 
+
 def test_default_config_used_on_no_match():
     r = Router(default_config={"model": "default"})
     result = r.route("something unrelated")
@@ -57,6 +59,7 @@ def test_default_config_not_used_when_match():
 # ---------------------------------------------------------------------------
 # Priority
 # ---------------------------------------------------------------------------
+
 
 def test_higher_priority_wins():
     r = Router()
@@ -78,9 +81,12 @@ def test_equal_priority_first_registered_wins():
 # Regex routes
 # ---------------------------------------------------------------------------
 
+
 def test_regex_route_matches():
     r = Router()
-    r.add_regex_route("email", r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", config={"type": "email"})
+    r.add_regex_route(
+        "email", r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", config={"type": "email"}
+    )
     result = r.route("send email to user@example.com")
     assert result.route_name == "email"
     assert result.config["type"] == "email"
@@ -96,6 +102,7 @@ def test_regex_no_match():
 # ---------------------------------------------------------------------------
 # Length routes
 # ---------------------------------------------------------------------------
+
 
 def test_length_route_min():
     r = Router()
@@ -113,7 +120,9 @@ def test_length_route_max():
 
 def test_length_route_range():
     r = Router()
-    r.add_length_route("medium", min_length=10, max_length=50, config={"type": "medium"})
+    r.add_length_route(
+        "medium", min_length=10, max_length=50, config={"type": "medium"}
+    )
     result = r.route("x" * 30)
     assert result.route_name == "medium"
 
@@ -128,6 +137,7 @@ def test_length_route_no_match():
 # ---------------------------------------------------------------------------
 # Custom predicate route
 # ---------------------------------------------------------------------------
+
 
 def test_custom_predicate():
     r = Router()
@@ -146,6 +156,7 @@ def test_custom_predicate_no_match():
 # ---------------------------------------------------------------------------
 # route_messages
 # ---------------------------------------------------------------------------
+
 
 def test_route_messages_uses_last_user():
     r = Router()
@@ -179,6 +190,7 @@ def test_route_messages_empty_falls_to_default():
 # all_routes
 # ---------------------------------------------------------------------------
 
+
 def test_all_routes_listed():
     r = Router()
     r.add_keyword_route("a", ["x"], config={})
@@ -189,6 +201,7 @@ def test_all_routes_listed():
 # ---------------------------------------------------------------------------
 # RoutingResult
 # ---------------------------------------------------------------------------
+
 
 def test_routing_result_has_matched_text():
     r = Router()
@@ -202,3 +215,41 @@ def test_routing_result_score_default():
     r.add_keyword_route("code", ["python"], config={})
     result = r.route("python")
     assert result.score == 1.0
+
+
+def test_route_returns_routing_result_instance():
+    r = Router()
+    r.add_keyword_route("code", ["python"], config={})
+    result = r.route("python")
+    assert isinstance(result, RoutingResult)
+
+
+# ---------------------------------------------------------------------------
+# route_messages edge cases
+# ---------------------------------------------------------------------------
+
+
+def test_route_messages_none_content_does_not_route_literal_none():
+    # A user message with content=None must be treated as empty text,
+    # not coerced to the literal string "None".
+    r = Router()
+    r.add_keyword_route("none", ["none"], config={})
+    with pytest.raises(NoRouteError):
+        r.route_messages([{"role": "user", "content": None}])
+
+
+def test_route_messages_missing_content_falls_to_default():
+    r = Router(default_config={"model": "default"})
+    result = r.route_messages([{"role": "user"}])
+    assert result.route_name == "__default__"
+
+
+def test_route_messages_ignores_non_user_roles():
+    r = Router(default_config={"model": "default"})
+    r.add_keyword_route("code", ["python"], config={})
+    messages = [
+        {"role": "system", "content": "python system prompt"},
+        {"role": "assistant", "content": "python answer"},
+    ]
+    result = r.route_messages(messages)
+    assert result.route_name == "__default__"

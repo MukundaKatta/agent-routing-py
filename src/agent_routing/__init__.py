@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
-from typing import Any, Callable
+from dataclasses import dataclass
+from typing import Callable
 
 
 @dataclass
@@ -73,9 +73,11 @@ class Router:
         case_sensitive: bool = False,
     ) -> "Router":
         """Match if any keyword appears in the text."""
+
         def matcher(text: str) -> bool:
             t = text if case_sensitive else text.lower()
             return any((kw if case_sensitive else kw.lower()) in t for kw in keywords)
+
         return self.add_route(name, matcher, config, priority)
 
     def add_regex_route(
@@ -91,6 +93,7 @@ class Router:
 
         def matcher(text: str) -> bool:
             return bool(compiled.search(text))
+
         return self.add_route(name, matcher, config, priority)
 
     def add_length_route(
@@ -103,6 +106,7 @@ class Router:
     ) -> "Router":
         """Match based on text length."""
         _config = config or {}
+
         def matcher(text: str) -> bool:
             n = len(text)
             if min_length is not None and n < min_length:
@@ -110,6 +114,7 @@ class Router:
             if max_length is not None and n > max_length:
                 return False
             return True
+
         return self.add_route(name, matcher, _config, priority)
 
     # ------------------------------------------------------------------
@@ -146,9 +151,12 @@ class Router:
                 content = msg.get("content", "")
                 if isinstance(content, list):
                     content = " ".join(
-                        b.get("text", "") for b in content
+                        b.get("text", "")
+                        for b in content
                         if isinstance(b, dict) and b.get("type") == "text"
                     )
+                elif content is None:
+                    content = ""
                 return self.route(str(content))
         return self.route("")
 
