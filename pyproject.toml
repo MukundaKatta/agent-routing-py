@@ -9,6 +9,29 @@ version = "0.1.0"
 readme = "README.md"
 requires-python = ">=3.9"
 license = {text = "MIT"}
+keywords = ["llm", "routing", "agent", "router", "intent", "dispatch"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://github.com/MukundaKatta/agent-routing-py"
+Repository = "https://github.com/MukundaKatta/agent-routing-py"
+Issues = "https://github.com/MukundaKatta/agent-routing-py/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+agent_routing = ["py.typed"]

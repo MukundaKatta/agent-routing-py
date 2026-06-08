@@ -2,6 +2,11 @@
 
 Route messages to different LLM configs based on intent and content.
 
+A tiny, dependency-free router that decides which model/config to use for a
+given prompt. Register routes by keyword, regular expression, text length, or a
+custom predicate, give them priorities, and let the router pick the best match
+(falling back to a default config when nothing matches).
+
 ```bash
 pip install agent-routing-py
 ```
@@ -69,4 +74,33 @@ RoutingResult.score        # float (1.0 for match, 0.0 for default)
 
 Raises `NoRouteError` when nothing matches and no `default_config` is set.
 
-## Zero dependencies
+## Behaviour notes
+
+- **Matching order.** Routes are sorted by descending `priority`; the first
+  matching route wins. Routes with equal priority are evaluated in registration
+  order.
+- **Keyword matching** is a simple substring check (case-insensitive by
+  default). An empty keyword list never matches.
+- **Length bounds** are inclusive: `min_length` and `max_length` both compare
+  with `<` / `>`, so a text exactly equal to a bound still matches.
+- **`route_messages`** uses the content of the *last* `user` message. List-form
+  content (e.g. Anthropic-style content blocks) is flattened to the
+  concatenation of its `text` blocks. A `None` or missing content is treated as
+  empty text, never the literal string `"None"`.
+- All registration methods return the `Router`, so calls can be chained.
+
+## Development
+
+This package has **no runtime dependencies**, and the test suite uses only the
+Python standard library (`unittest`) — no `pip install` required to run it:
+
+```bash
+python3 -m unittest discover -s tests -v
+```
+
+CI runs the same suite across Python 3.9–3.13 (see
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
+
+## License
+
+MIT
