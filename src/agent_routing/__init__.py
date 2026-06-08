@@ -61,6 +61,12 @@ class Router:
         config: dict,
         priority: int = 0,
     ) -> "Router":
+        """Register a route backed by a custom ``matcher`` predicate.
+
+        The predicate receives the candidate text and returns ``True`` when the
+        route should be selected. Higher ``priority`` routes are evaluated
+        first. Returns ``self`` so registrations can be chained.
+        """
         self._routes.append(Route(name, matcher, config, priority))
         return self
 
@@ -145,7 +151,13 @@ class Router:
         raise NoRouteError(f"No route matched text (length={len(text)})")
 
     def route_messages(self, messages: list[dict]) -> RoutingResult:
-        """Route based on the last user message content."""
+        """Route based on the content of the last ``user`` message.
+
+        Each message is a dict with ``role`` and ``content`` keys. List-form
+        content (content blocks) is flattened to the concatenation of its
+        ``text`` blocks. Missing or ``None`` content is treated as empty text.
+        If there is no user message, an empty string is routed.
+        """
         for msg in reversed(messages):
             if msg.get("role") == "user":
                 content = msg.get("content", "")
@@ -161,6 +173,7 @@ class Router:
         return self.route("")
 
     def all_routes(self) -> list[str]:
+        """Return the names of all registered routes in registration order."""
         return [r.name for r in self._routes]
 
 
